@@ -1,7 +1,7 @@
 //go:build examples
 
 /**
- * (C) Copyright IBM Corp. 2025.
+ * (C) Copyright IBM Corp. 2026.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+//
 // This file provides an example of how to use the secrets-manager service.
 //
 // The following configuration properties are assumed to be defined:
@@ -40,29 +41,30 @@ import (
 // These configuration properties can be exported as environment variables, or stored
 // in a configuration file and then:
 // export IBM_CREDENTIALS_FILE=<name of configuration file>
+//
 var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 
 	const externalConfigFile = "../secrets_manager_v2.env"
 
 	var (
 		secretsManagerService *secretsmanagerv2.SecretsManagerV2
-		config                map[string]string
+		config       map[string]string
 
 		// Variables to hold link values
-		configurationNameForGetConfigurationLink          string
-		secretGroupIdForGetSecretGroupLink                string
-		secretIdForCreateSecretVersionLink                string
-		secretIdForCreateSecretVersionLocksLink           string
-		secretIdForGetSecretLink                          string
-		secretIdForGetSecretVersionLink                   string
-		secretIdForListSecretLocksLink                    string
-		secretIdForListSecretVersionLocksLink             string
-		secretNameLink                                    string
-		secretVersionIdForCreateSecretVersionLocksLink    string
-		secretVersionIdForDeleteSecretVersionLocksLink    string
-		secretVersionIdForGetSecretVersionLink            string
-		secretVersionIdForGetSecretVersionMetadataLink    string
-		secretVersionIdForListSecretVersionLocksLink      string
+		configurationNameForGetConfigurationLink string
+		secretGroupIdForGetSecretGroupLink string
+		secretIdForCreateSecretVersionLink string
+		secretIdForCreateSecretVersionLocksLink string
+		secretIdForGetSecretLink string
+		secretIdForGetSecretVersionLink string
+		secretIdForListSecretLocksLink string
+		secretIdForListSecretVersionLocksLink string
+		secretNameLink string
+		secretVersionIdForCreateSecretVersionLocksLink string
+		secretVersionIdForDeleteSecretVersionLocksLink string
+		secretVersionIdForGetSecretVersionLink string
+		secretVersionIdForGetSecretVersionMetadataLink string
+		secretVersionIdForListSecretVersionLocksLink string
 		secretVersionIdForUpdateSecretVersionMetadataLink string
 	)
 
@@ -146,12 +148,12 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-create_secret
 
 			secretPrototypeModel := &secretsmanagerv2.ArbitrarySecretPrototype{
-				Description:   core.StringPtr("Description of my arbitrary secret."),
-				Labels:        []string{"dev", "us-south"},
-				Name:          core.StringPtr("example-arbitrary-secret"),
+				Description: core.StringPtr("Description of my arbitrary secret."),
+				Labels: []string{"dev", "us-south"},
+				Name: core.StringPtr("example-arbitrary-secret"),
 				SecretGroupID: core.StringPtr("default"),
-				SecretType:    core.StringPtr("arbitrary"),
-				Payload:       core.StringPtr("secret-data"),
+				SecretType: core.StringPtr("arbitrary"),
+				Payload: core.StringPtr("secret-data"),
 			}
 
 			createSecretOptions := secretsManagerService.NewCreateSecretOptions(
@@ -176,14 +178,43 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			secretIdForGetSecretVersionLink = *secret.(*secretsmanagerv2.ArbitrarySecret).ID
 			fmt.Fprintf(GinkgoWriter, "Saved secretIdForGetSecretVersionLink value: %v\n", secretIdForGetSecretVersionLink)
 		})
+		It(`ListSecrets request example`, func() {
+			fmt.Println("\nListSecrets() result:")
+			// begin-list_secrets
+			listSecretsOptions := &secretsmanagerv2.ListSecretsOptions{
+				Limit: core.Int64Ptr(int64(10)),
+				Sort: core.StringPtr("created_at"),
+				Search: core.StringPtr("example"),
+				Groups: []string{"default", "cac40995-c37a-4dcb-9506-472869077634"},
+				SecretTypes: []string{"arbitrary", "kv"},
+				MatchAllLabels: []string{"dev", "us-south"},
+			}
+
+			pager, err := secretsManagerService.NewSecretsPager(listSecretsOptions)
+			if err != nil {
+				panic(err)
+			}
+
+			var allResults []secretsmanagerv2.SecretMetadataIntf
+			for pager.HasNext() {
+				nextPage, err := pager.GetNext()
+				if err != nil {
+					panic(err)
+				}
+				allResults = append(allResults, nextPage...)
+			}
+			b, _ := json.MarshalIndent(allResults, "", "  ")
+			fmt.Println(string(b))
+			// end-list_secrets
+		})
 		It(`UpdateSecretMetadata request example`, func() {
 			fmt.Println("\nUpdateSecretMetadata() result:")
 			// begin-update_secret_metadata
 
 			secretMetadataPatchModel := &secretsmanagerv2.ArbitrarySecretMetadataPatch{
-				Name:        core.StringPtr("updated-arbitrary-secret-name-example"),
+				Name: core.StringPtr("updated-arbitrary-secret-name-example"),
 				Description: core.StringPtr("updated Arbitrary Secret description"),
-				Labels:      []string{"dev", "us-south"},
+				Labels: []string{"dev", "us-south"},
 			}
 			secretMetadataPatchModelAsPatch, asPatchErr := secretMetadataPatchModel.AsPatch()
 			Expect(asPatchErr).To(BeNil())
@@ -250,7 +281,7 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-create_secret_locks_bulk
 
 			secretLockPrototypeModel := &secretsmanagerv2.SecretLockPrototype{
-				Name:        core.StringPtr("lock-example-1"),
+				Name: core.StringPtr("lock-example-1"),
 				Description: core.StringPtr("lock for consumer 1"),
 			}
 
@@ -284,10 +315,10 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-create_configuration
 
 			configurationPrototypeModel := &secretsmanagerv2.PublicCertificateConfigurationDNSCloudInternetServicesPrototype{
-				ConfigType:                  core.StringPtr("public_cert_configuration_dns_cloud_internet_services"),
-				Name:                        core.StringPtr("example-cloud-internet-services-config"),
+				ConfigType: core.StringPtr("public_cert_configuration_dns_cloud_internet_services"),
+				Name: core.StringPtr("example-cloud-internet-services-config"),
 				CloudInternetServicesApikey: core.StringPtr("5ipu_ykv0PMp2MhxQnDMn7VzrkSlBwi3BOI8uthi_EXZ"),
-				CloudInternetServicesCrn:    core.StringPtr("crn:v1:bluemix:public:internet-svcs:global:a/128e84fcca45c1224aae525d31ef2b52:009a0357-1460-42b4-b903-10580aba7dd8::"),
+				CloudInternetServicesCrn: core.StringPtr("crn:v1:bluemix:public:internet-svcs:global:a/128e84fcca45c1224aae525d31ef2b52:009a0357-1460-42b4-b903-10580aba7dd8::"),
 			}
 
 			createConfigurationOptions := secretsManagerService.NewCreateConfigurationOptions(
@@ -354,7 +385,8 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			fmt.Println("\nUpdateSecretGroup() result:")
 			// begin-update_secret_group
 
-			secretGroupPatchModel := &secretsmanagerv2.SecretGroupPatch{}
+			secretGroupPatchModel := &secretsmanagerv2.SecretGroupPatch{
+			}
 			secretGroupPatchModelAsPatch, asPatchErr := secretGroupPatchModel.AsPatch()
 			Expect(asPatchErr).To(BeNil())
 
@@ -375,35 +407,6 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			Expect(err).To(BeNil())
 			Expect(response.StatusCode).To(Equal(200))
 			Expect(secretGroup).ToNot(BeNil())
-		})
-		It(`ListSecrets request example`, func() {
-			fmt.Println("\nListSecrets() result:")
-			// begin-list_secrets
-			listSecretsOptions := &secretsmanagerv2.ListSecretsOptions{
-				Limit:          core.Int64Ptr(int64(10)),
-				Sort:           core.StringPtr("created_at"),
-				Search:         core.StringPtr("example"),
-				Groups:         []string{"default", "cac40995-c37a-4dcb-9506-472869077634"},
-				SecretTypes:    []string{"arbitrary", "kv"},
-				MatchAllLabels: []string{"dev", "us-south"},
-			}
-
-			pager, err := secretsManagerService.NewSecretsPager(listSecretsOptions)
-			if err != nil {
-				panic(err)
-			}
-
-			var allResults []secretsmanagerv2.SecretMetadataIntf
-			for pager.HasNext() {
-				nextPage, err := pager.GetNext()
-				if err != nil {
-					panic(err)
-				}
-				allResults = append(allResults, nextPage...)
-			}
-			b, _ := json.MarshalIndent(allResults, "", "  ")
-			fmt.Println(string(b))
-			// end-list_secrets
 		})
 		It(`GetSecret request example`, func() {
 			fmt.Println("\nGetSecret() result:")
@@ -570,7 +573,8 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			fmt.Println("\nUpdateSecretVersionMetadata() result:")
 			// begin-update_secret_version_metadata
 
-			secretVersionMetadataPatchModel := &secretsmanagerv2.SecretVersionMetadataPatch{}
+			secretVersionMetadataPatchModel := &secretsmanagerv2.SecretVersionMetadataPatch{
+			}
 			secretVersionMetadataPatchModelAsPatch, asPatchErr := secretVersionMetadataPatchModel.AsPatch()
 			Expect(asPatchErr).To(BeNil())
 
@@ -668,12 +672,12 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-replace_secret_task
 
 			customCredentialsNewCredentialsModel := &secretsmanagerv2.CustomCredentialsNewCredentials{
-				ID:      core.StringPtr("b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5"),
+				ID: core.StringPtr("b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5"),
 				Payload: map[string]interface{}{"anyKey": "anyValue"},
 			}
 
 			secretTaskPrototypeModel := &secretsmanagerv2.SecretTaskPrototypeUpdateSecretTaskCredentialsCreated{
-				Status:      core.StringPtr("credentials_created"),
+				Status: core.StringPtr("credentials_created"),
 				Credentials: customCredentialsNewCredentialsModel,
 			}
 
@@ -700,7 +704,7 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			fmt.Println("\nListSecretsLocks() result:")
 			// begin-list_secrets_locks
 			listSecretsLocksOptions := &secretsmanagerv2.ListSecretsLocksOptions{
-				Limit:  core.Int64Ptr(int64(10)),
+				Limit: core.Int64Ptr(int64(10)),
 				Search: core.StringPtr("example"),
 				Groups: []string{"default", "cac40995-c37a-4dcb-9506-472869077634"},
 			}
@@ -726,9 +730,9 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			fmt.Println("\nListSecretLocks() result:")
 			// begin-list_secret_locks
 			listSecretLocksOptions := &secretsmanagerv2.ListSecretLocksOptions{
-				ID:     &secretIdForGetSecretLink,
-				Limit:  core.Int64Ptr(int64(10)),
-				Sort:   core.StringPtr("name"),
+				ID: &secretIdForGetSecretLink,
+				Limit: core.Int64Ptr(int64(10)),
+				Sort: core.StringPtr("name"),
 				Search: core.StringPtr("example"),
 			}
 
@@ -754,7 +758,7 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-create_secret_version_locks_bulk
 
 			secretLockPrototypeModel := &secretsmanagerv2.SecretLockPrototype{
-				Name:        core.StringPtr("lock-example-1"),
+				Name: core.StringPtr("lock-example-1"),
 				Description: core.StringPtr("lock for consumer 1"),
 			}
 
@@ -782,10 +786,10 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			// begin-list_secret_version_locks
 			listSecretVersionLocksOptions := &secretsmanagerv2.ListSecretVersionLocksOptions{
 				SecretID: &secretIdForGetSecretLink,
-				ID:       &secretVersionIdForGetSecretVersionLink,
-				Limit:    core.Int64Ptr(int64(10)),
-				Sort:     core.StringPtr("name"),
-				Search:   core.StringPtr("example"),
+				ID: &secretVersionIdForGetSecretVersionLink,
+				Limit: core.Int64Ptr(int64(10)),
+				Sort: core.StringPtr("name"),
+				Search: core.StringPtr("example"),
 			}
 
 			pager, err := secretsManagerService.NewSecretVersionLocksPager(listSecretVersionLocksOptions)
@@ -809,9 +813,9 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			fmt.Println("\nListConfigurations() result:")
 			// begin-list_configurations
 			listConfigurationsOptions := &secretsmanagerv2.ListConfigurationsOptions{
-				Limit:       core.Int64Ptr(int64(10)),
-				Sort:        core.StringPtr("config_type"),
-				Search:      core.StringPtr("example"),
+				Limit: core.Int64Ptr(int64(10)),
+				Sort: core.StringPtr("config_type"),
+				Search: core.StringPtr("example"),
 				SecretTypes: []string{"iam_credentials", "public_cert", "private_cert", "custom_credentials"},
 			}
 
@@ -860,7 +864,7 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 
 			configurationPatchModel := &secretsmanagerv2.PublicCertificateConfigurationDNSCloudInternetServicesPatch{
 				CloudInternetServicesApikey: core.StringPtr("5ipu_ykv0PMp2MhxQnDMn7VzrkSlBwi3BOI8uthi_EXZ"),
-				CloudInternetServicesCrn:    core.StringPtr("crn:v1:bluemix:public:internet-svcs:global:a/128e84fcca45c1224aae525d31ef2b52:009a0357-1460-42b4-b903-10580aba7dd8::"),
+				CloudInternetServicesCrn: core.StringPtr("crn:v1:bluemix:public:internet-svcs:global:a/128e84fcca45c1224aae525d31ef2b52:009a0357-1460-42b4-b903-10580aba7dd8::"),
 			}
 			configurationPatchModelAsPatch, asPatchErr := configurationPatchModel.AsPatch()
 			Expect(asPatchErr).To(BeNil())
@@ -991,27 +995,6 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			Expect(err).To(BeNil())
 			Expect(response.StatusCode).To(Equal(204))
 		})
-		It(`DeleteSecretVersionData request example`, func() {
-			// begin-delete_secret_version_data
-
-			deleteSecretVersionDataOptions := secretsManagerService.NewDeleteSecretVersionDataOptions(
-				secretIdForGetSecretLink,
-				secretVersionIdForGetSecretVersionLink,
-			)
-
-			response, err := secretsManagerService.DeleteSecretVersionData(deleteSecretVersionDataOptions)
-			if err != nil {
-				panic(err)
-			}
-			if response.StatusCode != 204 {
-				fmt.Printf("\nUnexpected response status code received from DeleteSecretVersionData(): %d\n", response.StatusCode)
-			}
-
-			// end-delete_secret_version_data
-
-			Expect(err).To(BeNil())
-			Expect(response.StatusCode).To(Equal(204))
-		})
 		It(`DeleteSecretLocksBulk request example`, func() {
 			fmt.Println("\nDeleteSecretLocksBulk() result:")
 			// begin-delete_secret_locks_bulk
@@ -1073,6 +1056,27 @@ var _ = Describe(`SecretsManagerV2 Examples Tests`, func() {
 			}
 
 			// end-delete_secret
+
+			Expect(err).To(BeNil())
+			Expect(response.StatusCode).To(Equal(204))
+		})
+		It(`DeleteSecretVersionData request example`, func() {
+			// begin-delete_secret_version_data
+
+			deleteSecretVersionDataOptions := secretsManagerService.NewDeleteSecretVersionDataOptions(
+				secretIdForGetSecretLink,
+				secretVersionIdForGetSecretVersionLink,
+			)
+
+			response, err := secretsManagerService.DeleteSecretVersionData(deleteSecretVersionDataOptions)
+			if err != nil {
+				panic(err)
+			}
+			if response.StatusCode != 204 {
+				fmt.Printf("\nUnexpected response status code received from DeleteSecretVersionData(): %d\n", response.StatusCode)
+			}
+
+			// end-delete_secret_version_data
 
 			Expect(err).To(BeNil())
 			Expect(response.StatusCode).To(Equal(204))
