@@ -1191,6 +1191,175 @@ var _ = Describe(`SecretsManagerV2`, func() {
 			})
 		})
 	})
+	Describe(`Public certificate profile serialization over HTTP`, func() {
+		var (
+			profileServer *httptest.Server
+			requestBody   map[string]interface{}
+			responseJSON  string
+		)
+		newService := func() *secretsmanagerv2.SecretsManagerV2 {
+			service, err := secretsmanagerv2.NewSecretsManagerV2(&secretsmanagerv2.SecretsManagerV2Options{
+				URL:           profileServer.URL,
+				Authenticator: &core.NoAuthAuthenticator{},
+			})
+			Expect(err).To(BeNil())
+			Expect(service).ToNot(BeNil())
+			return service
+		}
+		publicCertJSON := func(profile string) string {
+			profileField := ""
+			if profile != "" {
+				profileField = `, "profile": "` + profile + `"`
+			}
+			return `{"created_by": "iam-ServiceId-e4a2f0a4", "created_at": "2022-04-12T23:20:50.520Z", "crn": "Crn", "id": "b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5", "name": "my-cert", "secret_group_id": "default", "secret_type": "public_cert", "state": 1, "state_description": "active", "updated_at": "2022-04-12T23:20:50.520Z", "versions_total": 1, "key_algorithm": "RSA2048", "ca": "my-ca-config", "dns": "my-dns-config"` + profileField + `}`
+		}
+		newPrototype := func(profile *string) *secretsmanagerv2.PublicCertificatePrototype {
+			model := new(secretsmanagerv2.PublicCertificatePrototype)
+			model.Name = core.StringPtr("my-cert")
+			model.SecretType = core.StringPtr("public_cert")
+			model.CommonName = core.StringPtr("example.com")
+			model.KeyAlgorithm = core.StringPtr("RSA2048")
+			model.Ca = core.StringPtr("my-ca-config")
+			model.Dns = core.StringPtr("my-dns-config")
+			model.Profile = profile
+			return model
+		}
+		BeforeEach(func() {
+			requestBody = nil
+			profileServer = httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+				defer GinkgoRecover()
+				if req.Body != nil {
+					raw, err := io.ReadAll(req.Body)
+					Expect(err).To(BeNil())
+					if len(raw) > 0 {
+						Expect(json.Unmarshal(raw, &requestBody)).To(Succeed())
+					}
+				}
+				res.Header().Set("Content-type", "application/json")
+				res.WriteHeader(200)
+				fmt.Fprint(res, responseJSON)
+			}))
+		})
+		AfterEach(func() {
+			profileServer.Close()
+		})
+
+		for _, profile := range []string{
+			secretsmanagerv2.PublicCertificatePrototype_Profile_Classic,
+			secretsmanagerv2.PublicCertificatePrototype_Profile_Tlsserver,
+			secretsmanagerv2.PublicCertificatePrototype_Profile_Shortlived,
+		} {
+			profile := profile
+			It(`CreateSecret sends profile "`+profile+`" in the request body and reads it from the response`, func() {
+				responseJSON = publicCertJSON(profile)
+				options := new(secretsmanagerv2.CreateSecretOptions)
+				options.SecretPrototype = newPrototype(core.StringPtr(profile))
+
+				result, response, err := newService().CreateSecret(options)
+				Expect(err).To(BeNil())
+				Expect(response).ToNot(BeNil())
+
+				Expect(requestBody).To(HaveKeyWithValue("profile", profile))
+				cert, ok := result.(*secretsmanagerv2.PublicCertificate)
+				Expect(ok).To(BeTrue())
+				Expect(cert.Profile).ToNot(BeNil())
+				Expect(*cert.Profile).To(Equal(profile))
+			})
+		}
+
+		It(`CreateSecret omits profile from the request body when not set`, func() {
+			responseJSON = publicCertJSON("classic")
+			options := new(secretsmanagerv2.CreateSecretOptions)
+			options.SecretPrototype = newPrototype(nil)
+
+			_, _, err := newService().CreateSecret(options)
+			Expect(err).To(BeNil())
+			Expect(requestBody).ToNot(HaveKey("profile"))
+		})
+
+		It(`GetSecret returns Profile for a public_cert response`, func() {
+			responseJSON = publicCertJSON("shortlived")
+			options := new(secretsmanagerv2.GetSecretOptions)
+			options.ID = core.StringPtr("b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5")
+
+			result, _, err := newService().GetSecret(options)
+			Expect(err).To(BeNil())
+			cert, ok := result.(*secretsmanagerv2.PublicCertificate)
+			Expect(ok).To(BeTrue())
+			Expect(cert.Profile).ToNot(BeNil())
+			Expect(*cert.Profile).To(Equal(secretsmanagerv2.PublicCertificate_Profile_Shortlived))
+		})
+
+		It(`GetSecret returns nil Profile when the response has no profile`, func() {
+			responseJSON = publicCertJSON("")
+			options := new(secretsmanagerv2.GetSecretOptions)
+			options.ID = core.StringPtr("b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5")
+
+			result, _, err := newService().GetSecret(options)
+			Expect(err).To(BeNil())
+			cert, ok := result.(*secretsmanagerv2.PublicCertificate)
+			Expect(ok).To(BeTrue())
+			Expect(cert.Profile).To(BeNil())
+		})
+
+		It(`GetSecretMetadata returns Profile for a public_cert response`, func() {
+			responseJSON = publicCertJSON("tlsserver")
+			options := new(secretsmanagerv2.GetSecretMetadataOptions)
+			options.ID = core.StringPtr("b49ad24d-81d4-5ebc-b9b9-b0937d1c84d5")
+
+			result, _, err := newService().GetSecretMetadata(options)
+			Expect(err).To(BeNil())
+			cert, ok := result.(*secretsmanagerv2.PublicCertificateMetadata)
+			Expect(ok).To(BeTrue())
+			Expect(cert.Profile).ToNot(BeNil())
+			Expect(*cert.Profile).To(Equal(secretsmanagerv2.PublicCertificateMetadata_Profile_Tlsserver))
+		})
+
+		It(`ListSecrets returns Profile for public_cert entries`, func() {
+			responseJSON = `{"secrets": [` + publicCertJSON("classic") + `, ` + publicCertJSON("") + `], "total_count": 2, "limit": 200, "offset": 0}`
+
+			result, _, err := newService().ListSecrets(new(secretsmanagerv2.ListSecretsOptions))
+			Expect(err).To(BeNil())
+			Expect(result.Secrets).To(HaveLen(2))
+
+			first, ok := result.Secrets[0].(*secretsmanagerv2.PublicCertificateMetadata)
+			Expect(ok).To(BeTrue())
+			Expect(first.Profile).ToNot(BeNil())
+			Expect(*first.Profile).To(Equal("classic"))
+
+			second, ok := result.Secrets[1].(*secretsmanagerv2.PublicCertificateMetadata)
+			Expect(ok).To(BeTrue())
+			Expect(second.Profile).To(BeNil())
+		})
+
+		It(`Profile constants have the documented values on every model`, func() {
+			Expect([]string{
+				secretsmanagerv2.Secret_Profile_Classic,
+				secretsmanagerv2.SecretMetadata_Profile_Classic,
+				secretsmanagerv2.SecretPrototype_Profile_Classic,
+				secretsmanagerv2.PublicCertificate_Profile_Classic,
+				secretsmanagerv2.PublicCertificateMetadata_Profile_Classic,
+				secretsmanagerv2.PublicCertificatePrototype_Profile_Classic,
+			}).To(Equal([]string{"classic", "classic", "classic", "classic", "classic", "classic"}))
+			Expect([]string{
+				secretsmanagerv2.Secret_Profile_Tlsserver,
+				secretsmanagerv2.SecretMetadata_Profile_Tlsserver,
+				secretsmanagerv2.SecretPrototype_Profile_Tlsserver,
+				secretsmanagerv2.PublicCertificate_Profile_Tlsserver,
+				secretsmanagerv2.PublicCertificateMetadata_Profile_Tlsserver,
+				secretsmanagerv2.PublicCertificatePrototype_Profile_Tlsserver,
+			}).To(Equal([]string{"tlsserver", "tlsserver", "tlsserver", "tlsserver", "tlsserver", "tlsserver"}))
+			Expect([]string{
+				secretsmanagerv2.Secret_Profile_Shortlived,
+				secretsmanagerv2.SecretMetadata_Profile_Shortlived,
+				secretsmanagerv2.SecretPrototype_Profile_Shortlived,
+				secretsmanagerv2.PublicCertificate_Profile_Shortlived,
+				secretsmanagerv2.PublicCertificateMetadata_Profile_Shortlived,
+				secretsmanagerv2.PublicCertificatePrototype_Profile_Shortlived,
+			}).To(Equal([]string{"shortlived", "shortlived", "shortlived", "shortlived", "shortlived", "shortlived"}))
+		})
+	})
+
 	Describe(`CreateSecret(createSecretOptions *CreateSecretOptions) - Operation response error`, func() {
 		createSecretPath := "/api/v2/secrets"
 		Context(`Using mock server endpoint with invalid JSON response`, func() {
