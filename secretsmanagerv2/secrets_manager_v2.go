@@ -9344,6 +9344,10 @@ type Secret struct {
 	// The name of the DNS provider configuration.
 	Dns *string `json:"dns,omitempty"`
 
+	// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+	Profile *string `json:"profile,omitempty"`
+
 	// The properties of the resource key that was created for this source service instance.
 	SourceService *ServiceCredentialsSecretSourceServiceRO `json:"source_service,omitempty"`
 
@@ -9410,6 +9414,15 @@ const (
 	Secret_StateDescription_Destroyed = "destroyed"
 	Secret_StateDescription_PreActivation = "pre_activation"
 	Secret_StateDescription_Suspended = "suspended"
+)
+
+// Constants associated with the Secret.Profile property.
+// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+const (
+	Secret_Profile_Classic = "classic"
+	Secret_Profile_Shortlived = "shortlived"
+	Secret_Profile_Tlsserver = "tlsserver"
 )
 func (*Secret) isaSecret() bool {
 	return true
@@ -10237,6 +10250,10 @@ type SecretMetadata struct {
 	// The name of the DNS provider configuration.
 	Dns *string `json:"dns,omitempty"`
 
+	// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+	Profile *string `json:"profile,omitempty"`
+
 	// The properties of the resource key that was created for this source service instance.
 	SourceService *ServiceCredentialsSecretSourceServiceRO `json:"source_service,omitempty"`
 
@@ -10289,6 +10306,15 @@ const (
 	SecretMetadata_StateDescription_Destroyed = "destroyed"
 	SecretMetadata_StateDescription_PreActivation = "pre_activation"
 	SecretMetadata_StateDescription_Suspended = "suspended"
+)
+
+// Constants associated with the SecretMetadata.Profile property.
+// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+const (
+	SecretMetadata_Profile_Classic = "classic"
+	SecretMetadata_Profile_Shortlived = "shortlived"
+	SecretMetadata_Profile_Tlsserver = "tlsserver"
 )
 func (*SecretMetadata) isaSecretMetadata() bool {
 	return true
@@ -10850,6 +10876,10 @@ type SecretPrototype struct {
 	// the certificate file to contain only the issued certificate.
 	BundleCerts *bool `json:"bundle_certs,omitempty"`
 
+	// The certificate profile to request from Let's Encrypt. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. If not specified, the 'classic' profile is used.
+	Profile *string `json:"profile,omitempty"`
+
 	// The properties that are required to create the service credentials for the specified source service instance.
 	SourceService *ServiceCredentialsSecretSourceService `json:"source_service,omitempty"`
 
@@ -10897,6 +10927,15 @@ const (
 const (
 	SecretPrototype_PrivateKeyFormat_Der = "der"
 	SecretPrototype_PrivateKeyFormat_Pkcs8 = "pkcs8"
+)
+
+// Constants associated with the SecretPrototype.Profile property.
+// The certificate profile to request from Let's Encrypt. Supported values are 'classic', 'tlsserver', and 'shortlived'.
+// If not specified, the 'classic' profile is used.
+const (
+	SecretPrototype_Profile_Classic = "classic"
+	SecretPrototype_Profile_Shortlived = "shortlived"
+	SecretPrototype_Profile_Tlsserver = "tlsserver"
 )
 func (*SecretPrototype) isaSecretPrototype() bool {
 	return true
@@ -26376,6 +26415,10 @@ type PublicCertificate struct {
 	// The name of the DNS provider configuration.
 	Dns *string `json:"dns,omitempty"`
 
+	// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+	Profile *string `json:"profile,omitempty"`
+
 	// Your PEM-encoded certificate. The data must be formatted on a single line with embedded newline characters.
 	Certificate *string `json:"certificate,omitempty"`
 
@@ -26411,6 +26454,15 @@ const (
 	PublicCertificate_StateDescription_Destroyed = "destroyed"
 	PublicCertificate_StateDescription_PreActivation = "pre_activation"
 	PublicCertificate_StateDescription_Suspended = "suspended"
+)
+
+// Constants associated with the PublicCertificate.Profile property.
+// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+const (
+	PublicCertificate_Profile_Classic = "classic"
+	PublicCertificate_Profile_Shortlived = "shortlived"
+	PublicCertificate_Profile_Tlsserver = "tlsserver"
 )
 
 func (*PublicCertificate) isaSecret() bool {
@@ -26573,6 +26625,11 @@ func UnmarshalPublicCertificate(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalPrimitive(m, "dns", &obj.Dns)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "dns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "profile", &obj.Profile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "certificate", &obj.Certificate)
@@ -28090,6 +28147,10 @@ type PublicCertificateMetadata struct {
 
 	// The name of the DNS provider configuration.
 	Dns *string `json:"dns,omitempty"`
+
+	// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+	Profile *string `json:"profile,omitempty"`
 }
 
 // Constants associated with the PublicCertificateMetadata.SecretType property.
@@ -28115,6 +28176,15 @@ const (
 	PublicCertificateMetadata_StateDescription_Destroyed = "destroyed"
 	PublicCertificateMetadata_StateDescription_PreActivation = "pre_activation"
 	PublicCertificateMetadata_StateDescription_Suspended = "suspended"
+)
+
+// Constants associated with the PublicCertificateMetadata.Profile property.
+// The certificate profile that was used to issue the certificate. Supported values are 'classic', 'tlsserver', and
+// 'shortlived'. Certificates created without a profile, or before profile support was introduced, return 'classic'.
+const (
+	PublicCertificateMetadata_Profile_Classic = "classic"
+	PublicCertificateMetadata_Profile_Shortlived = "shortlived"
+	PublicCertificateMetadata_Profile_Tlsserver = "tlsserver"
 )
 
 func (*PublicCertificateMetadata) isaSecretMetadata() bool {
@@ -28279,6 +28349,11 @@ func UnmarshalPublicCertificateMetadata(m map[string]json.RawMessage, result int
 		err = core.SDKErrorf(err, "", "dns-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "profile", &obj.Profile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -28427,6 +28502,10 @@ type PublicCertificatePrototype struct {
 	// `USERNAME_PASSWORD`, `PRIVATE_CERT`, `PUBLIC_CERT`, `IAM_CREDENTIALS`, `CUSTOM_CREDENTIALS`.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
+	// The certificate profile to request from Let's Encrypt. Supported values are 'classic', 'tlsserver', and
+	// 'shortlived'. If not specified, the 'classic' profile is used.
+	Profile *string `json:"profile,omitempty"`
+
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
@@ -28447,6 +28526,15 @@ const (
 	PublicCertificatePrototype_SecretType_PublicCert = "public_cert"
 	PublicCertificatePrototype_SecretType_ServiceCredentials = "service_credentials"
 	PublicCertificatePrototype_SecretType_UsernamePassword = "username_password"
+)
+
+// Constants associated with the PublicCertificatePrototype.Profile property.
+// The certificate profile to request from Let's Encrypt. Supported values are 'classic', 'tlsserver', and 'shortlived'.
+// If not specified, the 'classic' profile is used.
+const (
+	PublicCertificatePrototype_Profile_Classic = "classic"
+	PublicCertificatePrototype_Profile_Shortlived = "shortlived"
+	PublicCertificatePrototype_Profile_Tlsserver = "tlsserver"
 )
 
 // NewPublicCertificatePrototype : Instantiate PublicCertificatePrototype (Generic Model Constructor)
@@ -28529,6 +28617,11 @@ func UnmarshalPublicCertificatePrototype(m map[string]json.RawMessage, result in
 	err = core.UnmarshalModel(m, "rotation", &obj.Rotation, UnmarshalRotationPolicy)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "rotation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "profile", &obj.Profile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "custom_metadata", &obj.CustomMetadata)
